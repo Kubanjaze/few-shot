@@ -39,3 +39,8 @@ Outputs: fewshot_comparison.json, fewshot_report.txt
 | Est. cost | $0.0024 |
 
 Key finding: Few-shot corrected a boundary case error (pIC50=7.95 at the potent/highly_potent edge). The examples calibrated Claude's threshold handling. This is consistent with Phase 70's finding that explicit definitions matter most.
+
+## Risks (resolved)
+- Both may achieve 100% when pIC50 thresholds are explicit — zero-shot missed boundary case (pIC50=7.95)
+- Example selection bias may favor certain classes — mitigated by selecting diverse classes (moderate/potent/highly_potent)
+- 5 test compounds may not capture all edge cases — boundary case at 7.95 was successfully tested
