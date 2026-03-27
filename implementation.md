@@ -1,34 +1,41 @@
 # Phase 71 — Few-Shot Activity Classification
 
-**Version:** 1.0 | **Tier:** Standard | **Date:** 2026-03-27
+**Version:** 1.1 | **Tier:** Standard | **Date:** 2026-03-27
 
 ## Goal
-Compare zero-shot vs 3-shot prompting for classifying compound activity (inactive/weak/moderate/potent/highly_potent). Tests whether providing examples improves classification accuracy on the remaining compounds.
+Compare zero-shot vs 3-shot prompting for classifying compound activity. Tests whether providing examples improves classification accuracy.
 
 CLI: `python main.py --input data/compounds.csv --n-test 5`
 
 Outputs: fewshot_comparison.json, fewshot_report.txt
 
 ## Logic
-- Select 3 diverse example compounds (different classes) as few-shot examples
-- Select 5 test compounds (not in examples) for evaluation
-- Zero-shot: ask Claude to classify with just the class definitions
-- 3-shot: same request but include 3 labeled examples before the test compound
-- Compare accuracy on activity_class between the two approaches
+- Select 3 diverse examples (moderate, potent, highly_potent) as few-shot demonstrations
+- Select 5 test compounds (excluding examples) for evaluation
+- Zero-shot: class definitions only, no examples
+- 3-shot: include labeled examples as user/assistant turn pairs before test query
+- Compare accuracy on activity_class
 
 ## Key Concepts
-- Zero-shot: only class definitions in prompt, no examples
-- Few-shot: include labeled examples (compound + pIC50 → class) before the test query
-- Example selection: pick diverse classes (one moderate, one potent, one highly_potent)
-- Accuracy: exact match on activity_class field
-- Tests whether examples help when definitions are already clear
+- Zero-shot: only thresholds in prompt, no labeled examples
+- Few-shot: multi-turn format with 3 (user, assistant) example pairs
+- Example selection: deliberately diverse classes (moderate, potent, highly_potent)
+- The few-shot format uses Claude's multi-turn conversation to simulate labeled examples
 
 ## Verification Checklist
-- [ ] 3 examples selected from diverse activity classes
-- [ ] 5 test compounds evaluated with both approaches
-- [ ] Accuracy comparison reported
-- [ ] 10 total API calls (2 per test compound × 5)
+- [x] 3 examples from diverse activity classes
+- [x] 5 test compounds evaluated with both approaches
+- [x] Few-shot >= zero-shot accuracy
+- [x] 10 total API calls
 
-## Risks
-- Both may achieve 100% if classification thresholds are given (our data has explicit pIC50)
-- The real value of few-shot shows when thresholds are ambiguous or unlabeled
+## Results
+| Metric | Value |
+|--------|-------|
+| Zero-shot accuracy | 80% (4/5) |
+| Few-shot accuracy | 100% (5/5) |
+| Delta | +20% |
+| Zero-shot failure | benz_005_CN (pIC50=7.95): predicted highly_potent, true=potent |
+| Total tokens | in=2241 out=145 |
+| Est. cost | $0.0024 |
+
+Key finding: Few-shot corrected a boundary case error (pIC50=7.95 at the potent/highly_potent edge). The examples calibrated Claude's threshold handling. This is consistent with Phase 70's finding that explicit definitions matter most.
